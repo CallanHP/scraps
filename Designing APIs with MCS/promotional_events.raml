@@ -1,0 +1,228 @@
+#%RAML 0.8
+title: Marketing Events API
+version: 1.0
+baseUri: /mobile/custom/promotional_events
+protocols: [HTTPS]
+mediaType: "application/json"
+/events:
+  displayName: Events
+  description: |
+    High level collection of upcoming marketing events. Allows for the creation of new events with POST, and retrieval of a list of events with GET.
+    
+  get:
+    displayName: Events
+    description: |
+      Get a list of upcoming events.
+      
+    protocols: [HTTPS]
+    queryParameters:
+      filter:
+        displayName: Filter
+        description: |
+          Filter the results. Filter is space separated and the syntax is [field] [operator] [value].
+          Supported operators are:
+          EQ: Equality operator
+          GT, LT: Greater than and less than operators (only supported for the 'date' field)
+          
+        type: string
+        example: |
+          filter=location EQ Sydney
+          
+      fields:
+        displayName: Fields
+        description: |
+          Only return the provided fields. Fields are comma separated.
+          
+        type: string
+        example: |
+          fields=title,date,location
+          
+    responses:
+      200:
+        description: |
+          A list of upcoming events.
+          
+        body:
+          application/json:
+            example: |
+              { "events":[
+                  {
+                    "eventid":635,
+                    "title":"API Platform and RAML",
+                    "location":"Oracle Cloud",
+                    "date":"2017-03-03",
+                    "shortdesc":"Learn about using API Platform with RAML.",
+                    "presenter":"Callan Howell-Pavia"
+                  },
+                	{
+                    "eventid":636,
+                    "title":"Mobile Cloud for API Development",
+                    "location":"Sydney",
+                    "date":"2017-03-04",
+                    "shortdesc":"How to use Mobile Cloud to build API-first Apps",
+                    "presenter":"Callan Howell-Pavia"
+                  }
+                ]
+              }
+              
+  post:
+    displayName: Create an Event
+    description: |
+      Create a new event.
+      
+    protocols: [HTTPS]
+    body:
+      application/json:
+        example: |
+          {
+            "title":"API Platform and RAML",
+            "location":"Oracle Cloud",
+            "date":"2017-03-03",
+            "shortdesc":"Learn about using API Platform with RAML.",
+            "description":"A discussion about using RAML and Swagger as API descriptors in API Platform.",
+            "presenter":"Callan Howell-Pavia"
+          }
+          
+    responses:
+      201:
+        description: |
+          The event was successfully created. Returns an eventid.
+          
+        body:
+          application/json:
+            example: |
+              {
+                "eventid": 635
+              }
+              
+  /{eventid}:
+    displayName: Event
+    description: |
+      A handler for a specific event. Allows retrieval of details with GET, and updating with PUT, and deleting with DELETE.
+      
+    uriParameters:
+      eventid:
+        displayName: eventid
+        description: |
+          Specific event numerical identifier
+          
+        type: integer
+        example: |
+          635
+          
+        required: true
+    get:
+      displayName: Get an Event
+      description: |
+        Retrieve information about a specific event.
+        
+      responses:
+        200:
+          body:
+            application/json:
+              example: |
+                {
+                  "eventid":635,
+                  "title":"API Platform and RAML",
+                  "location":"Oracle Cloud",
+                  "date":"2017-03-03",
+                  "shortdesc":"Learn about using API Platform with RAML.",
+                  "description":"A discussion about using RAML and Swagger as API descriptors in API Platform.",
+                  "presenter":"Callan Howell-Pavia"
+                }
+                
+    delete:
+      displayName: Delete an Event
+      description: |
+        Delete this event. User must be a authenticated marketing manager.
+        
+      responses:
+        204:
+    put:
+      displayName: Update an Event
+      description: |
+        Update an existing Event. The body should include only include the fields to be changed and their new values. Excluded fields with not be updated.
+        
+      body:
+        application/json:
+          example: |
+            {
+              "description":"Totally new and different description"
+            }
+            
+    /attendees:
+      displayName: Attendees
+      description: |
+        Access to the registered attendee list for an event. Attendees can register with POST, and un-register with DELETE. Marketing can retrieve a list of attendees with GET.
+        
+      get:
+        displayName: Get a list of Attendees
+        description: |
+          Retrieve a list of attendees registered for the event specified by eventid. User must be an authenticated marketing manager.
+          
+        responses:
+          200:
+            body:
+              application/json:
+                example: |
+                  { "attendees":[
+                    	{ "name":"Jane Smith",
+                        "organisation":"Acme inc.",
+                        "title":"API Super-Specialist",
+                        "email":"jsmith1@acme.com"
+                      },
+                    	{ "name":"John Smith",
+                        "organisation":"Acme inc.",
+                        "title":"API Specialist",
+                        "email":"jsmith2@acme.com"
+                      }  	
+                    ]
+                  }
+                  
+      post:
+        displayName: Register an attendee
+        description: |
+          Register to attend the event. As this is unauthenticated, we trust the registration details.
+          
+        body:
+          application/json:
+            example: |
+              { 
+                "name":"John Smith",
+                "organisation":"Acme inc.",
+                "title":"API Specialist",
+                "email":"jsmith2@acme.com"
+              }
+              
+        responses:
+          201:
+      delete:
+        displayName: Unregister an attendee
+        description: |
+          Unregister an attendee. As this is unauthenticated, this doesn't instantly unregister an attendee. Rather it sends an email to the provided address for verification, to prevent abuse.
+          
+        queryParameters:
+          email:
+            displayName: Email
+            description: |
+              The email address which the attendee registered with
+              
+            type: string
+            example: |
+              jsmith1@acme.com
+              
+            required: true
+        responses:
+          202:
+            description: |
+              The unregister process has begun.
+              
+/presenters:
+  displayName: Presenters
+  description: |
+    Collection of registered presenters. Allows for retrieval of the presenter/id mapping with GET and presenter registration with POST.
+    
+/collateral:
+  displayName: Marketing Collateral
+  description: |
+    Searchable listing of available marketing collateral which can be serve as a template for invitations, speaker handouts, etc.
